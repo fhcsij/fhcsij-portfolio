@@ -69,6 +69,67 @@ const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)
 const hasFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 const accentColors = ["coral", "teal", "blue", "gold", "violet", "cyan", "lime"];
 let lastAnimatedProjectIndex = -1;
+const rootElement = document.documentElement;
+const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+const isPerformanceLite = () => rootElement.classList.contains("performance-lite");
+
+function enablePerformanceLite() {
+  rootElement.classList.add("performance-lite");
+  document.querySelector(".cursor-ring")?.classList.remove("cursor-visible");
+}
+
+function setupAdaptivePerformance() {
+  const hasLimitedMemory = navigator.deviceMemory && navigator.deviceMemory <= 4;
+  const hasLimitedCpu = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+  const usesDataSaver = Boolean(connection?.saveData);
+  const isSmallScreen = window.matchMedia("(max-width: 779px)").matches;
+
+  if (hasLimitedMemory || hasLimitedCpu || usesDataSaver || isSmallScreen) {
+    enablePerformanceLite();
+    return;
+  }
+
+  let monitoring = false;
+  let monitorComplete = false;
+  let previousFrame = 0;
+  let sampledFrames = 0;
+  let slowFrames = 0;
+
+  const sampleFrame = (now) => {
+    if (previousFrame && now - previousFrame > 28) {
+      slowFrames += 1;
+    }
+
+    previousFrame = now;
+    sampledFrames += 1;
+
+    if (sampledFrames < 90) {
+      requestAnimationFrame(sampleFrame);
+      return;
+    }
+
+    monitoring = false;
+    monitorComplete = true;
+
+    if (slowFrames >= 5) {
+      enablePerformanceLite();
+    }
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (monitoring || monitorComplete) {
+        return;
+      }
+
+      monitoring = true;
+      requestAnimationFrame(sampleFrame);
+    },
+    { passive: true },
+  );
+}
 
 function projectMeta(project) {
   return project.stack.map((item) => `<span>${item}</span>`).join("");
@@ -143,7 +204,7 @@ function setupMenu() {
 function setupCustomCursor() {
   const cursor = document.querySelector(".cursor-ring");
 
-  if (!cursor || !hasFinePointer || prefersReducedMotion) {
+  if (!cursor || !hasFinePointer || prefersReducedMotion || isPerformanceLite()) {
     return;
   }
 
@@ -193,7 +254,7 @@ function setupCustomCursor() {
 }
 
 function setupProjectTilt() {
-  if (prefersReducedMotion || !hasFinePointer || window.innerWidth < 1024) {
+  if (prefersReducedMotion || !hasFinePointer || window.innerWidth < 1024 || isPerformanceLite()) {
     return;
   }
 
@@ -266,7 +327,8 @@ function updateShowcaseHud(activeIndex, animate = true) {
     normalizedIndex !== lastAnimatedProjectIndex &&
     window.gsap &&
     activeSlide &&
-    !prefersReducedMotion
+    !prefersReducedMotion &&
+    !isPerformanceLite()
   ) {
     lastAnimatedProjectIndex = normalizedIndex;
     const content = activeSlide.querySelectorAll(
@@ -318,7 +380,7 @@ function setupAnimations() {
     scrollTrigger: {
       start: 0,
       end: "max",
-      scrub: 0.2,
+      scrub: true,
     },
   });
 
@@ -327,14 +389,14 @@ function setupAnimations() {
   gsap.from(".hero-visual", { autoAlpha: 0, x: 52, rotate: 2.5, duration: 1 });
   gsap.from(".hero-visual figcaption", { autoAlpha: 0, y: 24, delay: 0.4, duration: 0.7 });
 
-  gsap.to(".intro-strip__inner", {
-    xPercent: -50,
-    ease: "none",
+  gsap.from(".intro-strip__inner", {
+    autoAlpha: 0.45,
+    x: 80,
+    duration: 0.8,
     scrollTrigger: {
       trigger: ".intro-strip",
-      start: "top bottom",
-      end: "bottom top",
-      scrub: 1,
+      start: "top 92%",
+      once: true,
     },
   });
 
@@ -346,20 +408,20 @@ function setupAnimations() {
       scrollTrigger: {
         trigger: element,
         start: "top 82%",
-        toggleActions: "play none none reverse",
+        once: true,
       },
     });
   });
 
   ScrollTrigger.batch(".reveal-card", {
     start: "top 82%",
+    once: true,
     onEnter: (batch) =>
       gsap.fromTo(
         batch,
         { autoAlpha: 0, y: 38 },
         { autoAlpha: 1, y: 0, stagger: 0.09, duration: 0.7, overwrite: true },
       ),
-    onLeaveBack: (batch) => gsap.set(batch, { autoAlpha: 0, y: 38, overwrite: true }),
   });
 
   gsap.set(".reveal-card", { autoAlpha: 0, y: 38 });
@@ -393,7 +455,7 @@ function setupAnimations() {
     const track = document.querySelector(".project-track");
     const motionRails = document.querySelector(".motion-rails");
     const getScrollDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
-    const setRailX = motionRails ? gsap.quickSetter(motionRails, "x", "px") : null;
+    const setRailX = motionRails && !isPerformanceLite() ? gsap.quickSetter(motionRails, "x", "px") : null;
     let activeProjectIndex = 0;
 
     const horizontalTween = gsap.to(track, {
@@ -404,7 +466,7 @@ function setupAnimations() {
         start: "top top",
         end: () => `+=${getScrollDistance()}`,
         pin: true,
-        scrub: 1,
+        scrub: isPerformanceLite() ? true : 0.55,
         invalidateOnRefresh: true,
         anticipatePin: 1,
         onUpdate: (self) => {
@@ -536,6 +598,7 @@ function setupFallbackMotion() {
 }
 
 document.querySelector("#year").textContent = new Date().getFullYear();
+setupAdaptivePerformance();
 renderFeaturedProjects();
 setupMenu();
 setupCustomCursor();

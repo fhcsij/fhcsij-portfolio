@@ -865,12 +865,12 @@ h3 {
 }
 
 .project-slide.is-active .project-number {
-  animation: number-float 2.8s ease-in-out infinite;
+  animation: number-float 1.2s ease-out 1 both;
   animation-play-state: paused;
 }
 
 .project-slide.is-active .project-slide__orb {
-  animation: orb-breathe 4s ease-in-out infinite;
+  animation: orb-breathe 1.4s ease-out 1 both;
   animation-play-state: paused;
 }
 
@@ -929,7 +929,7 @@ h3 {
   background: var(--accent);
   border-radius: 50%;
   box-shadow: 0 0 16px var(--accent);
-  animation: status-pulse 1.8s ease-in-out infinite;
+  animation: status-pulse 900ms ease-out 2;
   animation-play-state: paused;
 }
 
@@ -1177,6 +1177,42 @@ h3 {
   color: var(--muted);
   border-top: 1px solid var(--line);
   font-weight: 800;
+}
+
+.skills,
+.process,
+.about,
+.contact,
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
+
+.performance-lite .cursor-ring,
+.performance-lite .motion-rails,
+.performance-lite .project-slide__shine,
+.performance-lite .project-slide__orb,
+.performance-lite .project-slide__scan,
+.performance-lite .skill-card::after {
+  display: none;
+}
+
+.performance-lite .project-slide {
+  box-shadow: 0 14px 32px rgba(36, 54, 72, 0.13);
+  transform: none;
+}
+
+.performance-lite .project-slide-clickable:hover,
+.performance-lite .skill-card:hover {
+  box-shadow: 0 14px 32px rgba(36, 54, 72, 0.13);
+  transform: none;
+}
+
+.performance-lite .project-number,
+.performance-lite .project-status i,
+.performance-lite .section-heading::after,
+.performance-lite .project-slide::after {
+  animation: none !important;
 }
 
 @media (max-width: 920px) {

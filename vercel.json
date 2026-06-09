@@ -1,34 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "functions": {
-    "api/*.php": {
-      "runtime": "vercel-php@0.9.0"
-    }
-  },
-  "routes": [
-    {
-      "src": "/php/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/TTL-deploy/(php|var)/(.*)",
-      "status": 404
-    },
-    {
-      "src": "/TTL-deploy/(.*\\.sql|.*\\.md|\\.DS_Store|\\.gitignore|\\.htaccess)",
-      "status": 404
-    },
-    {
-      "src": "/(.*\\.sql|README_DEPLOY\\.md|TTL-deploy\\.zip)",
-      "status": 404
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "cleanUrls": true
 }
