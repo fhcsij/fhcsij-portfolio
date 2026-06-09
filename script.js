@@ -166,22 +166,29 @@ function renderFeaturedProjects() {
           data-project-index="${index}"
           ${linkAttributes}
         >
-          <span class="project-page-fold" aria-hidden="true"></span>
-          <span class="project-slide__shine" aria-hidden="true"></span>
-          <span class="project-slide__orb" aria-hidden="true"></span>
-          <span class="project-slide__scan" aria-hidden="true"></span>
-          <div class="project-slide__top">
-            <span class="project-kicker">${project.tag}</span>
-            <span class="project-status"><i></i>${status}</span>
+          <div class="project-page-front">
+            <span class="project-page-fold" aria-hidden="true"></span>
+            <span class="project-slide__shine" aria-hidden="true"></span>
+            <span class="project-slide__orb" aria-hidden="true"></span>
+            <span class="project-slide__scan" aria-hidden="true"></span>
+            <div class="project-slide__top">
+              <span class="project-kicker">${project.tag}</span>
+              <span class="project-status"><i></i>${status}</span>
+            </div>
+            <div class="project-slide__content">
+              <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
+              <h3 class="project-title">${project.title}</h3>
+              <p class="project-description">${project.description}</p>
+            </div>
+            <div class="project-slide__footer">
+              <div class="project-meta">${projectMeta(project)}</div>
+              ${projectLink(project)}
+            </div>
           </div>
-          <div class="project-slide__content">
-            <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
-            <h3>${project.title}</h3>
-            <p>${project.description}</p>
-          </div>
-          <div class="project-slide__footer">
-            <div class="project-meta">${projectMeta(project)}</div>
-            ${projectLink(project)}
+          <div class="project-page-back" aria-hidden="true">
+            <span>ARCHIVE PAGE</span>
+            <strong>${String(index + 1).padStart(2, "0")}</strong>
+            <small>${project.tag}</small>
           </div>
         </${slideTag}>
       `;
@@ -332,6 +339,8 @@ function updateShowcaseHud(activeIndex, animate = true) {
 
   slides.forEach((slide, index) => {
     slide.classList.toggle("is-active", index === normalizedIndex);
+    slide.classList.toggle("is-past", index < normalizedIndex);
+    slide.classList.toggle("is-future", index > normalizedIndex);
   });
 
   if (
@@ -469,26 +478,35 @@ function setupAnimations() {
     const motionRails = document.querySelector(".motion-rails");
     const slides = gsap.utils.toArray(".project-slide");
     const folds = slides.map((slide) => slide.querySelector(".project-page-fold"));
+    const fronts = slides.map((slide) => slide.querySelector(".project-page-front"));
+    const backs = slides.map((slide) => slide.querySelector(".project-page-back"));
     const pageCount = Math.max(1, slides.length - 1);
     let activeProjectIndex = 0;
 
     showcase.classList.add("book-mode");
 
     gsap.set(track, { x: 0 });
+    slides.forEach((slide, index) => {
+      const fanOffset = Math.min(index, 5);
+
+      gsap.set(slide, {
+        x: fanOffset * 5,
+        y: (fanOffset - 2) * 5,
+        z: -fanOffset * 7,
+        scale: 1 - fanOffset * 0.012,
+        rotationY: -fanOffset * 1.8,
+        rotationZ: (fanOffset - 2) * 1.15,
+        autoAlpha: 1,
+        zIndex: slides.length - index,
+      });
+    });
     gsap.set(slides, {
-      x: 0,
-      xPercent: 0,
-      scale: 1,
-      rotationY: 0,
-      autoAlpha: 1,
       transformOrigin: "0% 50%",
       force3D: true,
     });
-    gsap.set(slides.slice(1), { autoAlpha: 0 });
     gsap.set(folds, { autoAlpha: 0, scaleX: 0, transformOrigin: "right center" });
-    slides.forEach((slide, index) => {
-      gsap.set(slide, { zIndex: slides.length - index });
-    });
+    gsap.set(fronts, { autoAlpha: 1, backfaceVisibility: "hidden" });
+    gsap.set(backs, { autoAlpha: 0, backfaceVisibility: "hidden" });
 
     const bookTimeline = gsap.timeline({
       defaults: { ease: "none" },
@@ -503,7 +521,7 @@ function setupAnimations() {
         onUpdate: (self) => {
           const nextIndex = Math.min(
             pageCount,
-            Math.floor(self.progress * pageCount + 0.35),
+            Math.floor(self.progress * pageCount + 0.53),
           );
           if (nextIndex !== activeProjectIndex) {
             activeProjectIndex = nextIndex;
@@ -517,44 +535,70 @@ function setupAnimations() {
       const nextSlide = slides[index + 1];
       const fold = folds[index];
       const position = index;
+      const leftFan = Math.min(index, 5);
 
       bookTimeline
-        .fromTo(
+        .to(
+          fold,
+          { autoAlpha: 0.96, scaleX: 1, duration: 0.34 },
+          position,
+        )
+        .to(
+          slide,
+          {
+            rotationY: -89.5,
+            rotationZ: -7,
+            x: -12,
+            y: -10,
+            z: 34,
+            scale: 0.97,
+            duration: 0.48,
+          },
+          position,
+        )
+        .to(fronts[index], { autoAlpha: 0, duration: 0.02 }, position + 0.47)
+        .to(backs[index], { autoAlpha: 1, duration: 0.02 }, position + 0.47)
+        .set(
+          slide,
+          {
+            xPercent: -100,
+            rotationY: 89.5,
+            z: -500,
+            transformOrigin: "100% 50%",
+            zIndex: index + 1,
+          },
+          position + 0.49,
+        )
+        .to(
+          fold,
+          { autoAlpha: 0.18, scaleX: 0.25, duration: 0.28 },
+          position + 0.46,
+        )
+        .to(
+          slide,
+          {
+            rotationY: 7 + leftFan * 1.5,
+            rotationZ: -5 + leftFan * 1.4,
+            x: -leftFan * 7,
+            y: (leftFan - 2) * 6,
+            z: -leftFan * 8,
+            scale: 1 - leftFan * 0.012,
+            duration: 0.51,
+          },
+          position + 0.49,
+        )
+        .to(
           nextSlide,
-          { autoAlpha: 0, x: 28, scale: 0.975 },
           {
-            autoAlpha: 1,
             x: 0,
+            y: 0,
+            z: 0,
             scale: 1,
-            duration: 0.36,
-            immediateRender: false,
+            rotationY: 0,
+            rotationZ: 0,
+            duration: 0.34,
           },
-          position + 0.4,
-        )
-        .to(
-          fold,
-          { autoAlpha: 0.92, scaleX: 1, duration: 0.42 },
-          position,
-        )
-        .to(
-          slide,
-          {
-            rotationY: -112,
-            xPercent: -5,
-            scale: 0.975,
-            duration: 0.88,
-          },
-          position,
-        )
-        .to(
-          fold,
-          { autoAlpha: 0, scaleX: 0.2, duration: 0.34 },
-          position + 0.5,
-        )
-        .to(
-          slide,
-          { autoAlpha: 0, duration: 0.12 },
-          position + 0.86,
+          position + 0.58,
         );
     });
 
@@ -563,6 +607,8 @@ function setupAnimations() {
       showcase.classList.remove("book-mode");
       gsap.set(slides, { clearProps: "all" });
       gsap.set(folds, { clearProps: "all" });
+      gsap.set(fronts, { clearProps: "all" });
+      gsap.set(backs, { clearProps: "all" });
       if (motionRails) {
         gsap.set(motionRails, { clearProps: "transform" });
       }
