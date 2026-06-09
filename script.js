@@ -68,6 +68,7 @@ const navLinks = document.querySelector(".nav-links");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hasFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 const accentColors = ["coral", "teal", "blue", "gold", "violet", "cyan", "lime"];
+let lastAnimatedProjectIndex = -1;
 
 function projectMeta(project) {
   return project.stack.map((item) => `<span>${item}</span>`).join("");
@@ -241,10 +242,12 @@ function setupProjectTilt() {
   });
 }
 
-function updateShowcaseHud(activeIndex) {
+function updateShowcaseHud(activeIndex, animate = true) {
   const counter = document.querySelector("#activeProjectNumber");
   const progress = document.querySelector("#showcaseProgressBar");
   const normalizedIndex = Math.min(projects.length - 1, Math.max(0, activeIndex));
+  const slides = document.querySelectorAll(".project-slide");
+  const activeSlide = slides[normalizedIndex];
 
   if (counter) {
     counter.textContent = String(normalizedIndex + 1).padStart(2, "0");
@@ -254,9 +257,36 @@ function updateShowcaseHud(activeIndex) {
     progress.style.transform = `scaleX(${(normalizedIndex + 1) / projects.length})`;
   }
 
-  document.querySelectorAll(".project-slide").forEach((slide, index) => {
+  slides.forEach((slide, index) => {
     slide.classList.toggle("is-active", index === normalizedIndex);
   });
+
+  if (
+    animate &&
+    normalizedIndex !== lastAnimatedProjectIndex &&
+    window.gsap &&
+    activeSlide &&
+    !prefersReducedMotion
+  ) {
+    lastAnimatedProjectIndex = normalizedIndex;
+    const content = activeSlide.querySelectorAll(
+      ".project-number, .project-slide h3, .project-slide p, .project-slide__footer",
+    );
+
+    gsap.fromTo(
+      content,
+      { autoAlpha: 0.55, y: 18 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.5,
+        stagger: 0.045,
+        ease: "power2.out",
+        overwrite: true,
+        clearProps: "opacity,visibility,transform",
+      },
+    );
+  }
 }
 
 function setupShowcaseEffects() {
@@ -312,6 +342,7 @@ function setupAnimations() {
     gsap.from(element, {
       autoAlpha: 0,
       y: 54,
+      onStart: () => element.classList.add("is-visible"),
       scrollTrigger: {
         trigger: element,
         start: "top 82%",
@@ -360,7 +391,9 @@ function setupAnimations() {
 
   mm.add("(min-width: 780px)", () => {
     const track = document.querySelector(".project-track");
+    const motionRails = document.querySelector(".motion-rails");
     const getScrollDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
+    const setRailX = motionRails ? gsap.quickSetter(motionRails, "x", "px") : null;
     let activeProjectIndex = 0;
 
     const horizontalTween = gsap.to(track, {
@@ -375,6 +408,7 @@ function setupAnimations() {
         invalidateOnRefresh: true,
         anticipatePin: 1,
         onUpdate: (self) => {
+          setRailX?.(self.progress * window.innerWidth * 0.24);
           const nextIndex = Math.round(self.progress * (projects.length - 1));
           if (nextIndex !== activeProjectIndex) {
             activeProjectIndex = nextIndex;
@@ -386,6 +420,9 @@ function setupAnimations() {
 
     return () => {
       horizontalTween.kill();
+      if (motionRails) {
+        gsap.set(motionRails, { clearProps: "transform" });
+      }
     };
   });
 }
@@ -504,5 +541,5 @@ setupMenu();
 setupCustomCursor();
 setupProjectTilt();
 setupShowcaseEffects();
-updateShowcaseHud(0);
+updateShowcaseHud(0, false);
 setupAnimations();
