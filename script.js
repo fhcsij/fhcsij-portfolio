@@ -92,12 +92,13 @@ function setupAdaptivePerformance() {
 
   let monitoring = false;
   let monitorComplete = false;
+  let monitorReady = false;
   let previousFrame = 0;
   let sampledFrames = 0;
   let slowFrames = 0;
 
   const sampleFrame = (now) => {
-    if (previousFrame && now - previousFrame > 28) {
+    if (previousFrame && now - previousFrame > 34) {
       slowFrames += 1;
     }
 
@@ -112,15 +113,19 @@ function setupAdaptivePerformance() {
     monitoring = false;
     monitorComplete = true;
 
-    if (slowFrames >= 5) {
+    if (slowFrames >= 7) {
       enablePerformanceLite();
     }
   };
 
+  window.setTimeout(() => {
+    monitorReady = true;
+  }, 1800);
+
   window.addEventListener(
     "scroll",
     () => {
-      if (monitoring || monitorComplete) {
+      if (!monitorReady || monitoring || monitorComplete) {
         return;
       }
 
@@ -161,6 +166,7 @@ function renderFeaturedProjects() {
           data-project-index="${index}"
           ${linkAttributes}
         >
+          <span class="project-page-fold" aria-hidden="true"></span>
           <span class="project-slide__shine" aria-hidden="true"></span>
           <span class="project-slide__orb" aria-hidden="true"></span>
           <span class="project-slide__scan" aria-hidden="true"></span>
@@ -254,7 +260,13 @@ function setupCustomCursor() {
 }
 
 function setupProjectTilt() {
-  if (prefersReducedMotion || !hasFinePointer || window.innerWidth < 1024 || isPerformanceLite()) {
+  if (
+    prefersReducedMotion ||
+    !hasFinePointer ||
+    window.innerWidth < 1024 ||
+    isPerformanceLite() ||
+    (window.gsap && window.ScrollTrigger)
+  ) {
     return;
   }
 
@@ -453,35 +465,104 @@ function setupAnimations() {
 
   mm.add("(min-width: 780px)", () => {
     const track = document.querySelector(".project-track");
+    const showcase = document.querySelector(".horizontal-showcase");
     const motionRails = document.querySelector(".motion-rails");
-    const getScrollDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
-    const setRailX = motionRails && !isPerformanceLite() ? gsap.quickSetter(motionRails, "x", "px") : null;
+    const slides = gsap.utils.toArray(".project-slide");
+    const folds = slides.map((slide) => slide.querySelector(".project-page-fold"));
+    const pageCount = Math.max(1, slides.length - 1);
     let activeProjectIndex = 0;
 
-    const horizontalTween = gsap.to(track, {
-      x: () => -getScrollDistance(),
-      ease: "none",
+    showcase.classList.add("book-mode");
+
+    gsap.set(track, { x: 0 });
+    gsap.set(slides, {
+      x: 0,
+      xPercent: 0,
+      scale: 1,
+      rotationY: 0,
+      autoAlpha: 1,
+      transformOrigin: "0% 50%",
+      force3D: true,
+    });
+    gsap.set(slides.slice(1), { autoAlpha: 0 });
+    gsap.set(folds, { autoAlpha: 0, scaleX: 0, transformOrigin: "right center" });
+    slides.forEach((slide, index) => {
+      gsap.set(slide, { zIndex: slides.length - index });
+    });
+
+    const bookTimeline = gsap.timeline({
+      defaults: { ease: "none" },
       scrollTrigger: {
-        trigger: ".horizontal-showcase",
+        trigger: showcase,
         start: "top top",
-        end: () => `+=${getScrollDistance()}`,
+        end: () => `+=${Math.max(window.innerHeight * 0.9, 720) * pageCount}`,
         pin: true,
-        scrub: isPerformanceLite() ? true : 0.55,
+        scrub: true,
         invalidateOnRefresh: true,
         anticipatePin: 1,
         onUpdate: (self) => {
-          setRailX?.(self.progress * window.innerWidth * 0.24);
-          const nextIndex = Math.round(self.progress * (projects.length - 1));
+          const nextIndex = Math.min(
+            pageCount,
+            Math.floor(self.progress * pageCount + 0.35),
+          );
           if (nextIndex !== activeProjectIndex) {
             activeProjectIndex = nextIndex;
-            updateShowcaseHud(activeProjectIndex);
+            updateShowcaseHud(activeProjectIndex, false);
           }
         },
       },
     });
 
+    slides.slice(0, -1).forEach((slide, index) => {
+      const nextSlide = slides[index + 1];
+      const fold = folds[index];
+      const position = index;
+
+      bookTimeline
+        .fromTo(
+          nextSlide,
+          { autoAlpha: 0, x: 28, scale: 0.975 },
+          {
+            autoAlpha: 1,
+            x: 0,
+            scale: 1,
+            duration: 0.36,
+            immediateRender: false,
+          },
+          position + 0.4,
+        )
+        .to(
+          fold,
+          { autoAlpha: 0.92, scaleX: 1, duration: 0.42 },
+          position,
+        )
+        .to(
+          slide,
+          {
+            rotationY: -112,
+            xPercent: -5,
+            scale: 0.975,
+            duration: 0.88,
+          },
+          position,
+        )
+        .to(
+          fold,
+          { autoAlpha: 0, scaleX: 0.2, duration: 0.34 },
+          position + 0.5,
+        )
+        .to(
+          slide,
+          { autoAlpha: 0, duration: 0.12 },
+          position + 0.86,
+        );
+    });
+
     return () => {
-      horizontalTween.kill();
+      bookTimeline.kill();
+      showcase.classList.remove("book-mode");
+      gsap.set(slides, { clearProps: "all" });
+      gsap.set(folds, { clearProps: "all" });
       if (motionRails) {
         gsap.set(motionRails, { clearProps: "transform" });
       }
