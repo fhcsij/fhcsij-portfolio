@@ -66,6 +66,7 @@ const featuredTrack = document.querySelector("#featuredTrack");
 const menuButton = document.querySelector(".menu-button");
 const navLinks = document.querySelector(".nav-links");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hasFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 const accentColors = ["coral", "teal", "blue", "gold", "violet", "cyan", "lime"];
 
 function projectMeta(project) {
@@ -140,29 +141,29 @@ function setupMenu() {
 
 function setupCustomCursor() {
   const cursor = document.querySelector(".cursor-ring");
-  const canUseCustomCursor = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-  if (!cursor || !canUseCustomCursor || prefersReducedMotion) {
+  if (!cursor || !hasFinePointer || prefersReducedMotion) {
     return;
   }
 
-  let moveCursor = (x, y) => {
-    cursor.style.left = `${x}px`;
-    cursor.style.top = `${y}px`;
-  };
-
-  if (window.gsap) {
-    const quickX = gsap.quickTo(cursor, "left", { duration: 0.18, ease: "power3.out" });
-    const quickY = gsap.quickTo(cursor, "top", { duration: 0.18, ease: "power3.out" });
-    moveCursor = (x, y) => {
-      quickX(x);
-      quickY(y);
-    };
-  }
+  let pointerX = 0;
+  let pointerY = 0;
+  let cursorFrame = 0;
 
   window.addEventListener("pointermove", (event) => {
     cursor.classList.add("cursor-visible");
-    moveCursor(event.clientX, event.clientY);
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+
+    if (cursorFrame) {
+      return;
+    }
+
+    cursorFrame = requestAnimationFrame(() => {
+      cursor.style.setProperty("--cursor-x", `${pointerX}px`);
+      cursor.style.setProperty("--cursor-y", `${pointerY}px`);
+      cursorFrame = 0;
+    });
   });
 
   window.addEventListener("pointerleave", () => {
@@ -191,25 +192,47 @@ function setupCustomCursor() {
 }
 
 function setupProjectTilt() {
-  if (prefersReducedMotion || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+  if (prefersReducedMotion || !hasFinePointer) {
     return;
   }
 
   document.querySelectorAll(".project-slide").forEach((slide) => {
-    slide.addEventListener("pointermove", (event) => {
-      const bounds = slide.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width;
-      const y = (event.clientY - bounds.top) / bounds.height;
-      const rotateY = (x - 0.5) * 9;
-      const rotateX = (0.5 - y) * 7;
+    let bounds;
+    let pointerX = 0.5;
+    let pointerY = 0.5;
+    let tiltFrame = 0;
 
-      slide.style.setProperty("--pointer-x", `${x * 100}%`);
-      slide.style.setProperty("--pointer-y", `${y * 100}%`);
-      slide.style.setProperty("--tilt-x", `${rotateX}deg`);
-      slide.style.setProperty("--tilt-y", `${rotateY}deg`);
+    slide.addEventListener("pointerenter", () => {
+      bounds = slide.getBoundingClientRect();
+    });
+
+    slide.addEventListener("pointermove", (event) => {
+      bounds ||= slide.getBoundingClientRect();
+      pointerX = (event.clientX - bounds.left) / bounds.width;
+      pointerY = (event.clientY - bounds.top) / bounds.height;
+
+      if (tiltFrame) {
+        return;
+      }
+
+      tiltFrame = requestAnimationFrame(() => {
+        const rotateY = (pointerX - 0.5) * 7;
+        const rotateX = (0.5 - pointerY) * 5;
+
+        slide.style.setProperty("--pointer-x", `${pointerX * 100}%`);
+        slide.style.setProperty("--pointer-y", `${pointerY * 100}%`);
+        slide.style.setProperty("--tilt-x", `${rotateX}deg`);
+        slide.style.setProperty("--tilt-y", `${rotateY}deg`);
+        tiltFrame = 0;
+      });
     });
 
     slide.addEventListener("pointerleave", () => {
+      bounds = null;
+      if (tiltFrame) {
+        cancelAnimationFrame(tiltFrame);
+        tiltFrame = 0;
+      }
       slide.style.setProperty("--pointer-x", "50%");
       slide.style.setProperty("--pointer-y", "50%");
       slide.style.setProperty("--tilt-x", "0deg");
@@ -238,38 +261,46 @@ function updateShowcaseHud(activeIndex) {
 
 function setupShowcaseEffects() {
   const showcase = document.querySelector(".horizontal-showcase");
+  const spotlight = showcase?.querySelector(".showcase-spotlight");
 
   if (!showcase || prefersReducedMotion) {
     return;
   }
 
-  showcase.addEventListener("pointermove", (event) => {
-    const bounds = showcase.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-    showcase.style.setProperty("--showcase-x", `${x}%`);
-    showcase.style.setProperty("--showcase-y", `${y}%`);
-  });
+  const visibilityObserver = new IntersectionObserver(
+    ([entry]) => showcase.classList.toggle("is-in-view", entry.isIntersecting),
+    { rootMargin: "120px 0px" },
+  );
+  visibilityObserver.observe(showcase);
 
-  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+  if (!hasFinePointer || !spotlight) {
     return;
   }
 
-  let lastTrailAt = 0;
+  let spotlightX = 0;
+  let spotlightY = 0;
+  let spotlightFrame = 0;
+  let showcaseBounds = showcase.getBoundingClientRect();
+
+  const refreshShowcaseBounds = () => {
+    showcaseBounds = showcase.getBoundingClientRect();
+  };
+
+  showcase.addEventListener("pointerenter", refreshShowcaseBounds);
+  window.addEventListener("resize", refreshShowcaseBounds, { passive: true });
+
   showcase.addEventListener("pointermove", (event) => {
-    const now = performance.now();
-    if (now - lastTrailAt < 44) {
+    spotlightX = event.clientX;
+    spotlightY = event.clientY - showcaseBounds.top;
+
+    if (spotlightFrame) {
       return;
     }
 
-    lastTrailAt = now;
-    const trail = document.createElement("span");
-    trail.className = "cursor-trail";
-    trail.style.left = `${event.clientX}px`;
-    trail.style.top = `${event.clientY}px`;
-    trail.style.setProperty("--trail-color", `hsl(${(event.clientX + event.clientY) % 360} 82% 62%)`);
-    document.body.appendChild(trail);
-    trail.addEventListener("animationend", () => trail.remove(), { once: true });
+    spotlightFrame = requestAnimationFrame(() => {
+      spotlight.style.transform = `translate3d(${spotlightX - 360}px, ${spotlightY - 360}px, 0)`;
+      spotlightFrame = 0;
+    });
   });
 }
 
@@ -433,19 +464,6 @@ function setupAnimations() {
         },
       );
 
-      gsap.to(slide.querySelector(".project-slide__orb"), {
-        xPercent: projectIndex % 2 === 0 ? 42 : -38,
-        yPercent: projectIndex % 3 === 0 ? -30 : 34,
-        rotate: 90,
-        ease: "none",
-        scrollTrigger: {
-          trigger: slide,
-          containerAnimation: horizontalTween,
-          start: "left right",
-          end: "right left",
-          scrub: 1,
-        },
-      });
     });
 
     return () => {
@@ -463,12 +481,22 @@ function setupFallbackMotion() {
   const slides = [...document.querySelectorAll(".project-slide")];
   const revealElements = document.querySelectorAll(".reveal, .reveal-card");
 
-  const updateScrollEffects = () => {
+  let scrollFrame = 0;
+  let showcaseFrame = 0;
+
+  const renderScrollEffects = () => {
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     progressBar.style.transform = `scaleX(${Math.min(1, window.scrollY / maxScroll)})`;
+    scrollFrame = 0;
   };
 
-  const updateActiveSlide = () => {
+  const updateScrollEffects = () => {
+    if (!scrollFrame) {
+      scrollFrame = requestAnimationFrame(renderScrollEffects);
+    }
+  };
+
+  const renderActiveSlide = () => {
     if (!showcase || !slides.length) {
       return;
     }
@@ -500,10 +528,17 @@ function setupFallbackMotion() {
     const scrollRatio = showcase.scrollLeft / Math.max(1, showcase.scrollWidth - showcase.clientWidth);
     document.querySelector(".showcase-aura--one")?.style.setProperty("transform", `translate3d(${scrollRatio * 170}px, ${scrollRatio * -80}px, 0)`);
     document.querySelector(".showcase-aura--two")?.style.setProperty("transform", `translate3d(${scrollRatio * -190}px, ${scrollRatio * 90}px, 0)`);
+    showcaseFrame = 0;
   };
 
-  updateScrollEffects();
-  updateActiveSlide();
+  const updateActiveSlide = () => {
+    if (!showcaseFrame) {
+      showcaseFrame = requestAnimationFrame(renderActiveSlide);
+    }
+  };
+
+  renderScrollEffects();
+  renderActiveSlide();
   window.addEventListener("scroll", updateScrollEffects, { passive: true });
   showcase?.addEventListener("scroll", updateActiveSlide, { passive: true });
   showcase?.addEventListener(
