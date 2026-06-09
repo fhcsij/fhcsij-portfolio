@@ -63,11 +63,10 @@ const projects = [
 ];
 
 const featuredTrack = document.querySelector("#featuredTrack");
-const projectGrid = document.querySelector("#projectGrid");
-const filterButtons = document.querySelectorAll(".filter-button");
 const menuButton = document.querySelector(".menu-button");
 const navLinks = document.querySelector(".nav-links");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const accentColors = ["coral", "teal", "blue", "gold", "violet", "cyan", "lime"];
 
 function projectMeta(project) {
   return project.stack.map((item) => `<span>${item}</span>`).join("");
@@ -83,55 +82,39 @@ function projectLink(project) {
 
 function renderFeaturedProjects() {
   featuredTrack.innerHTML = projects
-    .slice(0, 5)
     .map((project, index) => {
       const slideTag = project.url ? "a" : "article";
       const ctaLabel = project.ctaLabel || "線上 Demo";
       const linkAttributes = project.url
         ? `href="${project.url}" aria-label="開啟 ${project.title} ${ctaLabel}"`
         : "";
+      const status = project.url ? "LIVE" : "CONCEPT";
 
       return `
-        <${slideTag} class="project-slide ${project.url ? "project-slide-clickable" : ""}" ${linkAttributes}>
+        <${slideTag}
+          class="project-slide project-slide--${accentColors[index % accentColors.length]} ${
+            project.url ? "project-slide-clickable" : ""
+          }"
+          data-project-index="${index}"
+          ${linkAttributes}
+        >
+          <span class="project-slide__shine" aria-hidden="true"></span>
+          <span class="project-slide__orb" aria-hidden="true"></span>
+          <span class="project-slide__scan" aria-hidden="true"></span>
           <div class="project-slide__top">
             <span class="project-kicker">${project.tag}</span>
-            <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
+            <span class="project-status"><i></i>${status}</span>
           </div>
-          <div>
+          <div class="project-slide__content">
+            <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
             <h3>${project.title}</h3>
             <p>${project.description}</p>
           </div>
-          <div class="project-meta">${projectMeta(project)}</div>
-          ${projectLink(project)}
+          <div class="project-slide__footer">
+            <div class="project-meta">${projectMeta(project)}</div>
+            ${projectLink(project)}
+          </div>
         </${slideTag}>
-      `;
-    })
-    .join("");
-}
-
-function renderProjectGrid(activeFilter = "all") {
-  projectGrid.innerHTML = projects
-    .filter((project) => activeFilter === "all" || activeFilter === project.category)
-    .map((project, index) => {
-      const cardTag = project.url ? "a" : "article";
-      const ctaLabel = project.ctaLabel || "線上 Demo";
-      const linkAttributes = project.url
-        ? `href="${project.url}" aria-label="開啟 ${project.title} ${ctaLabel}"`
-        : "";
-
-      return `
-        <${cardTag} class="project-card ${project.url ? "project-card-clickable" : ""}" ${linkAttributes}>
-          <div class="project-top">
-            <span class="project-tag">${project.tag}</span>
-            <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
-          </div>
-          <div>
-            <h3>${project.title}</h3>
-            <p>${project.description}</p>
-          </div>
-          <div class="project-meta">${projectMeta(project)}</div>
-          ${project.url ? `<span class="project-link" aria-hidden="true">${ctaLabel}</span>` : ""}
-        </${cardTag}>
       `;
     })
     .join("");
@@ -152,26 +135,6 @@ function setupMenu() {
     navLinks.classList.remove("open");
     document.body.classList.remove("menu-open");
     menuButton.setAttribute("aria-expanded", "false");
-  });
-}
-
-function setupFilters() {
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      filterButtons.forEach((item) => {
-        item.classList.remove("active");
-        item.setAttribute("aria-selected", "false");
-      });
-
-      button.classList.add("active");
-      button.setAttribute("aria-selected", "true");
-      renderProjectGrid(button.dataset.filter);
-      animateProjectGrid();
-
-      if (window.ScrollTrigger) {
-        ScrollTrigger.refresh();
-      }
-    });
   });
 }
 
@@ -215,40 +178,104 @@ function setupCustomCursor() {
   });
 
   document.addEventListener("pointerover", (event) => {
-    if (event.target.closest("a, button, .project-card-clickable, .project-slide-clickable, .filter-button")) {
+    if (event.target.closest("a, button, .project-slide-clickable")) {
       cursor.classList.add("cursor-hover");
     }
   });
 
   document.addEventListener("pointerout", (event) => {
-    if (event.target.closest("a, button, .project-card-clickable, .project-slide-clickable, .filter-button")) {
+    if (event.target.closest("a, button, .project-slide-clickable")) {
       cursor.classList.remove("cursor-hover");
     }
   });
 }
 
-function animateProjectGrid() {
-  if (!window.gsap || prefersReducedMotion) {
+function setupProjectTilt() {
+  if (prefersReducedMotion || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     return;
   }
 
-  gsap.fromTo(
-    ".project-card",
-    { autoAlpha: 0, y: 34 },
-    {
-      autoAlpha: 1,
-      y: 0,
-      duration: 0.55,
-      ease: "power2.out",
-      stagger: 0.055,
-      overwrite: true,
-    },
-  );
+  document.querySelectorAll(".project-slide").forEach((slide) => {
+    slide.addEventListener("pointermove", (event) => {
+      const bounds = slide.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width;
+      const y = (event.clientY - bounds.top) / bounds.height;
+      const rotateY = (x - 0.5) * 9;
+      const rotateX = (0.5 - y) * 7;
+
+      slide.style.setProperty("--pointer-x", `${x * 100}%`);
+      slide.style.setProperty("--pointer-y", `${y * 100}%`);
+      slide.style.setProperty("--tilt-x", `${rotateX}deg`);
+      slide.style.setProperty("--tilt-y", `${rotateY}deg`);
+    });
+
+    slide.addEventListener("pointerleave", () => {
+      slide.style.setProperty("--pointer-x", "50%");
+      slide.style.setProperty("--pointer-y", "50%");
+      slide.style.setProperty("--tilt-x", "0deg");
+      slide.style.setProperty("--tilt-y", "0deg");
+    });
+  });
+}
+
+function updateShowcaseHud(activeIndex) {
+  const counter = document.querySelector("#activeProjectNumber");
+  const progress = document.querySelector("#showcaseProgressBar");
+  const normalizedIndex = Math.min(projects.length - 1, Math.max(0, activeIndex));
+
+  if (counter) {
+    counter.textContent = String(normalizedIndex + 1).padStart(2, "0");
+  }
+
+  if (progress) {
+    progress.style.transform = `scaleX(${(normalizedIndex + 1) / projects.length})`;
+  }
+
+  document.querySelectorAll(".project-slide").forEach((slide, index) => {
+    slide.classList.toggle("is-active", index === normalizedIndex);
+  });
+}
+
+function setupShowcaseEffects() {
+  const showcase = document.querySelector(".horizontal-showcase");
+
+  if (!showcase || prefersReducedMotion) {
+    return;
+  }
+
+  showcase.addEventListener("pointermove", (event) => {
+    const bounds = showcase.getBoundingClientRect();
+    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+    showcase.style.setProperty("--showcase-x", `${x}%`);
+    showcase.style.setProperty("--showcase-y", `${y}%`);
+  });
+
+  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    return;
+  }
+
+  let lastTrailAt = 0;
+  showcase.addEventListener("pointermove", (event) => {
+    const now = performance.now();
+    if (now - lastTrailAt < 44) {
+      return;
+    }
+
+    lastTrailAt = now;
+    const trail = document.createElement("span");
+    trail.className = "cursor-trail";
+    trail.style.left = `${event.clientX}px`;
+    trail.style.top = `${event.clientY}px`;
+    trail.style.setProperty("--trail-color", `hsl(${(event.clientX + event.clientY) % 360} 82% 62%)`);
+    document.body.appendChild(trail);
+    trail.addEventListener("animationend", () => trail.remove(), { once: true });
+  });
 }
 
 function setupAnimations() {
   if (!window.gsap || !window.ScrollTrigger || prefersReducedMotion) {
-    document.querySelector(".scroll-progress__bar").style.transform = "scaleX(1)";
+    setupFallbackMotion();
     return;
   }
 
@@ -269,6 +296,32 @@ function setupAnimations() {
   gsap.from(".hero-copy > *", { autoAlpha: 0, y: 42, stagger: 0.1, duration: 0.85 });
   gsap.from(".hero-visual", { autoAlpha: 0, x: 52, rotate: 2.5, duration: 1 });
   gsap.from(".hero-visual figcaption", { autoAlpha: 0, y: 24, delay: 0.4, duration: 0.7 });
+
+  gsap.to(".showcase-aura--one", {
+    xPercent: 22,
+    yPercent: -14,
+    rotate: 24,
+    ease: "none",
+    scrollTrigger: {
+      trigger: ".horizontal-showcase",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: 1.2,
+    },
+  });
+
+  gsap.to(".showcase-aura--two", {
+    xPercent: -26,
+    yPercent: 18,
+    rotate: -18,
+    ease: "none",
+    scrollTrigger: {
+      trigger: ".horizontal-showcase",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: 1.5,
+    },
+  });
 
   gsap.to(".intro-strip__inner", {
     xPercent: -50,
@@ -349,15 +402,48 @@ function setupAnimations() {
     });
 
     gsap.utils.toArray(".project-slide").forEach((slide) => {
-      gsap.from(slide, {
-        scale: 0.94,
-        autoAlpha: 0.55,
+      const projectIndex = Number(slide.dataset.projectIndex);
+
+      gsap.fromTo(
+        slide,
+        {
+          scale: 0.82,
+          autoAlpha: 0.28,
+          rotateY: projectIndex % 2 === 0 ? -10 : 10,
+          y: projectIndex % 2 === 0 ? 70 : -55,
+        },
+        {
+          scale: 1,
+          autoAlpha: 1,
+          rotateY: 0,
+          y: 0,
         scrollTrigger: {
           trigger: slide,
           containerAnimation: horizontalTween,
           start: "left 82%",
-          end: "left 36%",
-          scrub: 0.6,
+            end: "center 54%",
+            scrub: 0.75,
+            onEnter: () => {
+              updateShowcaseHud(projectIndex);
+            },
+            onEnterBack: () => {
+              updateShowcaseHud(projectIndex);
+            },
+          },
+        },
+      );
+
+      gsap.to(slide.querySelector(".project-slide__orb"), {
+        xPercent: projectIndex % 2 === 0 ? 42 : -38,
+        yPercent: projectIndex % 3 === 0 ? -30 : 34,
+        rotate: 90,
+        ease: "none",
+        scrollTrigger: {
+          trigger: slide,
+          containerAnimation: horizontalTween,
+          start: "left right",
+          end: "right left",
+          scrub: 1,
         },
       });
     });
@@ -368,11 +454,105 @@ function setupAnimations() {
   });
 }
 
+function setupFallbackMotion() {
+  document.documentElement.classList.add("no-gsap");
+
+  const progressBar = document.querySelector(".scroll-progress__bar");
+  const showcase = document.querySelector(".horizontal-showcase");
+  const counter = document.querySelector("#activeProjectNumber");
+  const slides = [...document.querySelectorAll(".project-slide")];
+  const revealElements = document.querySelectorAll(".reveal, .reveal-card");
+
+  const updateScrollEffects = () => {
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    progressBar.style.transform = `scaleX(${Math.min(1, window.scrollY / maxScroll)})`;
+  };
+
+  const updateActiveSlide = () => {
+    if (!showcase || !slides.length) {
+      return;
+    }
+
+    const center = showcase.scrollLeft + showcase.clientWidth / 2;
+    let activeIndex = 0;
+    let shortestDistance = Number.POSITIVE_INFINITY;
+
+    slides.forEach((slide, index) => {
+      const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+      const distance = Math.abs(center - slideCenter);
+      const signedDistance = (slideCenter - center) / Math.max(1, showcase.clientWidth);
+      const intensity = Math.max(0, 1 - Math.abs(signedDistance) * 1.4);
+
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        activeIndex = index;
+      }
+
+      slide.style.setProperty("--scroll-scale", String(0.88 + intensity * 0.12));
+      slide.style.setProperty("--scroll-y", `${(1 - intensity) * 54}px`);
+      slide.style.setProperty("--scroll-rotate-y", `${signedDistance * -7}deg`);
+      slide.style.opacity = String(0.68 + intensity * 0.32);
+    });
+
+    updateShowcaseHud(activeIndex);
+    slides.forEach((slide, index) => slide.classList.toggle("is-active", index === activeIndex));
+
+    const scrollRatio = showcase.scrollLeft / Math.max(1, showcase.scrollWidth - showcase.clientWidth);
+    document.querySelector(".showcase-aura--one")?.style.setProperty("transform", `translate3d(${scrollRatio * 170}px, ${scrollRatio * -80}px, 0)`);
+    document.querySelector(".showcase-aura--two")?.style.setProperty("transform", `translate3d(${scrollRatio * -190}px, ${scrollRatio * 90}px, 0)`);
+  };
+
+  updateScrollEffects();
+  updateActiveSlide();
+  window.addEventListener("scroll", updateScrollEffects, { passive: true });
+  showcase?.addEventListener("scroll", updateActiveSlide, { passive: true });
+  showcase?.addEventListener(
+    "wheel",
+    (event) => {
+      if (window.innerWidth < 780 || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+        return;
+      }
+
+      const atStart = showcase.scrollLeft <= 1;
+      const atEnd = showcase.scrollLeft >= showcase.scrollWidth - showcase.clientWidth - 1;
+      const canMove = (event.deltaY > 0 && !atEnd) || (event.deltaY < 0 && !atStart);
+
+      if (canMove) {
+        event.preventDefault();
+        showcase.scrollLeft += event.deltaY * 1.15;
+      }
+    },
+    { passive: false },
+  );
+
+  if ("IntersectionObserver" in window && !prefersReducedMotion) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+
+    revealElements.forEach((element) => observer.observe(element));
+  } else {
+    revealElements.forEach((element) => element.classList.add("is-visible"));
+  }
+
+  document.querySelectorAll("[data-count]").forEach((number) => {
+    number.textContent = number.dataset.count;
+  });
+}
+
 document.querySelector("#year").textContent = new Date().getFullYear();
 renderFeaturedProjects();
-renderProjectGrid();
 setupMenu();
-setupFilters();
 setupCustomCursor();
+setupProjectTilt();
+setupShowcaseEffects();
+updateShowcaseHud(0);
 setupAnimations();
-animateProjectGrid();
