@@ -192,7 +192,7 @@ function setupCustomCursor() {
 }
 
 function setupProjectTilt() {
-  if (prefersReducedMotion || !hasFinePointer) {
+  if (prefersReducedMotion || !hasFinePointer || window.innerWidth < 1024) {
     return;
   }
 
@@ -261,7 +261,6 @@ function updateShowcaseHud(activeIndex) {
 
 function setupShowcaseEffects() {
   const showcase = document.querySelector(".horizontal-showcase");
-  const spotlight = showcase?.querySelector(".showcase-spotlight");
 
   if (!showcase || prefersReducedMotion) {
     return;
@@ -272,36 +271,6 @@ function setupShowcaseEffects() {
     { rootMargin: "120px 0px" },
   );
   visibilityObserver.observe(showcase);
-
-  if (!hasFinePointer || !spotlight) {
-    return;
-  }
-
-  let spotlightX = 0;
-  let spotlightY = 0;
-  let spotlightFrame = 0;
-  let showcaseBounds = showcase.getBoundingClientRect();
-
-  const refreshShowcaseBounds = () => {
-    showcaseBounds = showcase.getBoundingClientRect();
-  };
-
-  showcase.addEventListener("pointerenter", refreshShowcaseBounds);
-  window.addEventListener("resize", refreshShowcaseBounds, { passive: true });
-
-  showcase.addEventListener("pointermove", (event) => {
-    spotlightX = event.clientX;
-    spotlightY = event.clientY - showcaseBounds.top;
-
-    if (spotlightFrame) {
-      return;
-    }
-
-    spotlightFrame = requestAnimationFrame(() => {
-      spotlight.style.transform = `translate3d(${spotlightX - 360}px, ${spotlightY - 360}px, 0)`;
-      spotlightFrame = 0;
-    });
-  });
 }
 
 function setupAnimations() {
@@ -327,32 +296,6 @@ function setupAnimations() {
   gsap.from(".hero-copy > *", { autoAlpha: 0, y: 42, stagger: 0.1, duration: 0.85 });
   gsap.from(".hero-visual", { autoAlpha: 0, x: 52, rotate: 2.5, duration: 1 });
   gsap.from(".hero-visual figcaption", { autoAlpha: 0, y: 24, delay: 0.4, duration: 0.7 });
-
-  gsap.to(".showcase-aura--one", {
-    xPercent: 22,
-    yPercent: -14,
-    rotate: 24,
-    ease: "none",
-    scrollTrigger: {
-      trigger: ".horizontal-showcase",
-      start: "top bottom",
-      end: "bottom top",
-      scrub: 1.2,
-    },
-  });
-
-  gsap.to(".showcase-aura--two", {
-    xPercent: -26,
-    yPercent: 18,
-    rotate: -18,
-    ease: "none",
-    scrollTrigger: {
-      trigger: ".horizontal-showcase",
-      start: "top bottom",
-      end: "bottom top",
-      scrub: 1.5,
-    },
-  });
 
   gsap.to(".intro-strip__inner", {
     xPercent: -50,
@@ -418,6 +361,7 @@ function setupAnimations() {
   mm.add("(min-width: 780px)", () => {
     const track = document.querySelector(".project-track");
     const getScrollDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
+    let activeProjectIndex = 0;
 
     const horizontalTween = gsap.to(track, {
       x: () => -getScrollDistance(),
@@ -429,41 +373,15 @@ function setupAnimations() {
         pin: true,
         scrub: 1,
         invalidateOnRefresh: true,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          const nextIndex = Math.round(self.progress * (projects.length - 1));
+          if (nextIndex !== activeProjectIndex) {
+            activeProjectIndex = nextIndex;
+            updateShowcaseHud(activeProjectIndex);
+          }
+        },
       },
-    });
-
-    gsap.utils.toArray(".project-slide").forEach((slide) => {
-      const projectIndex = Number(slide.dataset.projectIndex);
-
-      gsap.fromTo(
-        slide,
-        {
-          scale: 0.82,
-          autoAlpha: 0.28,
-          rotateY: projectIndex % 2 === 0 ? -10 : 10,
-          y: projectIndex % 2 === 0 ? 70 : -55,
-        },
-        {
-          scale: 1,
-          autoAlpha: 1,
-          rotateY: 0,
-          y: 0,
-        scrollTrigger: {
-          trigger: slide,
-          containerAnimation: horizontalTween,
-          start: "left 82%",
-            end: "center 54%",
-            scrub: 0.75,
-            onEnter: () => {
-              updateShowcaseHud(projectIndex);
-            },
-            onEnterBack: () => {
-              updateShowcaseHud(projectIndex);
-            },
-          },
-        },
-      );
-
     });
 
     return () => {
@@ -525,9 +443,6 @@ function setupFallbackMotion() {
     updateShowcaseHud(activeIndex);
     slides.forEach((slide, index) => slide.classList.toggle("is-active", index === activeIndex));
 
-    const scrollRatio = showcase.scrollLeft / Math.max(1, showcase.scrollWidth - showcase.clientWidth);
-    document.querySelector(".showcase-aura--one")?.style.setProperty("transform", `translate3d(${scrollRatio * 170}px, ${scrollRatio * -80}px, 0)`);
-    document.querySelector(".showcase-aura--two")?.style.setProperty("transform", `translate3d(${scrollRatio * -190}px, ${scrollRatio * 90}px, 0)`);
     showcaseFrame = 0;
   };
 
