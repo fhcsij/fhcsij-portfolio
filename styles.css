@@ -23,6 +23,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -487,12 +488,15 @@ h3 {
   padding: 18px 0;
   background: var(--ink);
   color: #fff;
+  contain: inline-size paint;
 }
 
 .intro-strip__inner {
   display: flex;
   width: max-content;
+  max-width: 100%;
   gap: clamp(28px, 6vw, 82px);
+  overflow: hidden;
   padding-inline: 20px;
   font-family: "Space Grotesk", sans-serif;
   font-size: clamp(1.25rem, 3vw, 2.5rem);
@@ -554,41 +558,43 @@ h3 {
 }
 
 .horizontal-showcase.book-mode {
-  color: #f7f5ef;
+  color: var(--ink);
   background:
-    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.09), transparent 38%),
-    linear-gradient(135deg, rgba(255, 107, 95, 0.08), transparent 42%),
-    linear-gradient(225deg, rgba(71, 124, 255, 0.11), transparent 44%),
-    #17181b;
+    radial-gradient(circle at 18% 24%, rgba(255, 107, 95, 0.42), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(242, 182, 50, 0.36), transparent 32%),
+    radial-gradient(circle at 74% 78%, rgba(19, 168, 158, 0.17), transparent 38%),
+    linear-gradient(145deg, #fff6e9 0%, #ffd9ca 50%, #fff0b9 100%);
 }
 
 .book-mode .showcase-spotlight {
-  background: radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.12), transparent 44%);
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.68), transparent 42%),
+    radial-gradient(circle at 28% 64%, rgba(255, 123, 96, 0.18), transparent 36%);
   opacity: 1;
 }
 
 .book-mode .showcase-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    linear-gradient(rgba(105, 60, 46, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(105, 60, 46, 0.075) 1px, transparent 1px);
 }
 
 .book-mode .showcase-counter {
   z-index: 45;
-  color: rgba(255, 255, 255, 0.52);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.46);
+  color: rgba(63, 37, 30, 0.58);
+  text-shadow: 0 2px 12px rgba(255, 255, 255, 0.62);
 }
 
 .book-mode .showcase-counter strong {
-  color: #fff;
+  color: #3f251e;
 }
 
 .book-mode .showcase-counter small {
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(63, 37, 30, 0.5);
 }
 
 .book-mode .showcase-progress {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(91, 51, 39, 0.16);
 }
 
 .showcase-spotlight {
@@ -746,11 +752,11 @@ h3 {
   z-index: 30;
   width: 10px;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(255, 255, 255, 0.46) 48%, rgba(0, 0, 0, 0.72));
+    linear-gradient(90deg, rgba(93, 48, 37, 0.72), rgba(255, 248, 229, 0.82) 48%, rgba(93, 48, 37, 0.72));
   border-radius: 50%;
   box-shadow:
-    -18px 0 40px rgba(0, 0, 0, 0.32),
-    18px 0 40px rgba(0, 0, 0, 0.32);
+    -18px 0 40px rgba(112, 58, 43, 0.2),
+    18px 0 40px rgba(112, 58, 43, 0.2);
   content: "";
   pointer-events: none;
   transform: rotate(-5deg) translateZ(70px);
@@ -763,7 +769,7 @@ h3 {
   left: 8%;
   z-index: -1;
   height: 18%;
-  background: rgba(0, 0, 0, 0.52);
+  background: rgba(105, 55, 42, 0.2);
   border-radius: 50%;
   content: "";
   pointer-events: none;
@@ -885,9 +891,9 @@ h3 {
   padding: 28px;
   color: #fff;
   background:
-    linear-gradient(135deg, rgba(var(--accent-rgb), 0.92), rgba(17, 18, 20, 0.97) 68%);
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.92), rgba(137, 67, 51, 0.96) 72%);
   box-shadow:
-    -18px 22px 42px rgba(0, 0, 0, 0.3),
+    -18px 22px 42px rgba(105, 55, 42, 0.24),
     inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   border-radius: 14px 0 0 14px;
   text-align: center;
@@ -1506,7 +1512,7 @@ h3 {
   }
 }
 
-@media (max-width: 779px) {
+@media (max-width: 1099px), (max-height: 699px) {
   .horizontal-showcase {
     min-height: auto;
     padding: 36px 0 72px;

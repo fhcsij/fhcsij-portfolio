@@ -83,7 +83,9 @@ function setupAdaptivePerformance() {
   const hasLimitedMemory = navigator.deviceMemory && navigator.deviceMemory <= 4;
   const hasLimitedCpu = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
   const usesDataSaver = Boolean(connection?.saveData);
-  const isSmallScreen = window.matchMedia("(max-width: 779px)").matches;
+  const isSmallScreen = window.matchMedia(
+    "(max-width: 1099px), (max-height: 699px)",
+  ).matches;
 
   if (hasLimitedMemory || hasLimitedCpu || usesDataSaver || isSmallScreen) {
     enablePerformanceLite();
@@ -478,7 +480,7 @@ function setupAnimations() {
 
   const mm = gsap.matchMedia();
 
-  mm.add("(min-width: 780px)", () => {
+  mm.add("(min-width: 1100px) and (min-height: 700px)", () => {
     const track = document.querySelector(".project-track");
     const showcase = document.querySelector(".horizontal-showcase");
     const motionRails = document.querySelector(".motion-rails");
