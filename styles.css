@@ -574,7 +574,9 @@ h3 {
 }
 
 .book-mode .showcase-counter {
+  z-index: 45;
   color: rgba(255, 255, 255, 0.52);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.46);
 }
 
 .book-mode .showcase-counter strong {
@@ -724,6 +726,7 @@ h3 {
 }
 
 .book-mode .project-track {
+  z-index: 10;
   display: block;
   width: min(1160px, calc(100vw - 120px));
   height: clamp(570px, 70vh, 740px);
@@ -740,7 +743,7 @@ h3 {
   top: 4%;
   bottom: 4%;
   left: calc(50% - 5px);
-  z-index: 50;
+  z-index: 30;
   width: 10px;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(255, 255, 255, 0.46) 48%, rgba(0, 0, 0, 0.72));
@@ -823,7 +826,7 @@ h3 {
 }
 
 .book-mode .project-slide.is-active {
-  z-index: 40 !important;
+  z-index: 20 !important;
   pointer-events: auto;
 }
 
@@ -901,6 +904,11 @@ h3 {
   font-size: clamp(5rem, 9vw, 9rem);
   line-height: 0.85;
   opacity: 0.88;
+}
+
+.book-mode .project-page-back > * {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .project-page-fold {
