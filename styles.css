@@ -871,7 +871,9 @@ h3 {
 }
 
 .book-mode .project-slide.is-future .project-page-front,
-.book-mode .project-slide.is-future .project-page-back {
+.book-mode .project-slide.is-future .project-page-back,
+.book-mode .project-slide.is-past:not(.is-visible-past) .project-page-front,
+.book-mode .project-slide.is-past:not(.is-visible-past) .project-page-back {
   visibility: hidden !important;
 }
 

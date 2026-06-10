@@ -338,9 +338,15 @@ function updateShowcaseHud(activeIndex, animate = true) {
   }
 
   slides.forEach((slide, index) => {
+    const historyDepth = normalizedIndex - index;
+
     slide.classList.toggle("is-active", index === normalizedIndex);
     slide.classList.toggle("is-past", index < normalizedIndex);
     slide.classList.toggle("is-future", index > normalizedIndex);
+    slide.classList.toggle(
+      "is-visible-past",
+      historyDepth > 0 && historyDepth <= 3,
+    );
   });
 
   if (
@@ -485,6 +491,28 @@ function setupAnimations() {
 
     showcase.classList.add("book-mode");
 
+    const layoutPastPages = (currentIndex) => {
+      slides.forEach((slide, index) => {
+        const depth = currentIndex - index;
+
+        if (depth <= 0 || depth > 3) {
+          return;
+        }
+
+        gsap.set(slide, {
+          xPercent: -100,
+          x: -depth * 7,
+          y: (depth - 2) * 7,
+          z: -depth * 18,
+          scale: 1 - depth * 0.012,
+          rotationY: 4 + depth * 1.4,
+          rotationZ: -1.2 - depth * 1.15,
+          transformOrigin: "100% 50%",
+          zIndex: 14 - depth,
+        });
+      });
+    };
+
     gsap.set(track, { x: 0 });
     slides.forEach((slide, index) => {
       const fanOffset = Math.min(index, 5);
@@ -527,6 +555,7 @@ function setupAnimations() {
             activeProjectIndex = nextIndex;
             updateShowcaseHud(activeProjectIndex, false);
           }
+          layoutPastPages(activeProjectIndex);
         },
       },
     });
