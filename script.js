@@ -76,6 +76,7 @@ const isPerformanceLite = () => rootElement.classList.contains("performance-lite
 
 function enablePerformanceLite() {
   rootElement.classList.add("performance-lite");
+  rootElement.classList.remove("custom-cursor-enabled");
   document.querySelector(".cursor-ring")?.classList.remove("cursor-visible");
 }
 
@@ -222,6 +223,8 @@ function setupCustomCursor() {
   if (!cursor || !hasFinePointer || prefersReducedMotion || isPerformanceLite()) {
     return;
   }
+
+  rootElement.classList.add("custom-cursor-enabled");
 
   let pointerX = 0;
   let pointerY = 0;

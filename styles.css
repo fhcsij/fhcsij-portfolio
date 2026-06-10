@@ -38,9 +38,9 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  body,
-  a,
-  button {
+  .custom-cursor-enabled body,
+  .custom-cursor-enabled a,
+  .custom-cursor-enabled button {
     cursor: none;
   }
 }
