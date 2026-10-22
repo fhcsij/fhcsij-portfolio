@@ -101,8 +101,7 @@ button {
     width 160ms ease,
     height 160ms ease,
     border-width 160ms ease,
-    opacity 160ms ease,
-    transform 80ms ease;
+    opacity 160ms ease;
   will-change: transform;
 }
 
@@ -827,8 +826,16 @@ h3 {
   overflow: visible;
   pointer-events: none;
   transform-style: preserve-3d;
-  will-change: transform;
+  /* GSAP owns transforms: a CSS transition here chases every animation frame. */
+  transition: none;
+  will-change: auto;
   contain: none;
+}
+
+.book-mode.is-in-view .project-slide.is-active,
+.book-mode.is-in-view .project-slide.is-next,
+.book-mode.is-in-view .project-slide.is-visible-past {
+  will-change: transform;
 }
 
 .book-mode .project-slide.is-active {
@@ -876,8 +883,8 @@ h3 {
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
-.book-mode .project-slide.is-future .project-page-front,
-.book-mode .project-slide.is-future .project-page-back,
+.book-mode .project-slide.is-future:not(.is-next) .project-page-front,
+.book-mode .project-slide.is-future:not(.is-next) .project-page-back,
 .book-mode .project-slide.is-past:not(.is-visible-past) .project-page-front,
 .book-mode .project-slide.is-past:not(.is-visible-past) .project-page-back {
   visibility: hidden !important;
@@ -1202,6 +1209,21 @@ h3 {
   animation-play-state: paused;
 }
 
+.project-status[data-status="development"] {
+  align-self: start;
+  padding: 3px 10px;
+  color: #795700;
+  background: #fff3cf;
+  border: 1px solid #e7cd88;
+  border-radius: 999px;
+}
+
+.project-status[data-status="development"] i {
+  background: #b47c12;
+  box-shadow: none;
+  animation: none;
+}
+
 @keyframes status-pulse {
   50% {
     opacity: 0.42;
@@ -1450,14 +1472,7 @@ h3 {
   font-weight: 800;
 }
 
-.skills,
-.process,
-.about,
-.contact,
-.site-footer {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 700px;
-}
+/* ScrollTrigger needs stable section heights, including off-screen content. */
 
 .performance-lite .cursor-ring,
 .performance-lite .motion-rails,
@@ -1475,7 +1490,16 @@ h3 {
 }
 
 .performance-lite .book-mode .project-slide {
-  box-shadow: 0 12px 28px rgba(36, 54, 72, 0.13);
+  box-shadow: none;
+}
+
+.performance-lite .book-mode .project-page-front {
+  box-shadow: 5px -7px 0 -1px #fff3cf, 10px -14px 0 -2px #e9ddff,
+    15px -21px 0 -3px #d6f3ef, 8px 12px 20px rgba(0, 0, 0, 0.16);
+}
+
+.performance-lite .book-mode .project-page-back {
+  box-shadow: -8px 12px 20px rgba(105, 55, 42, 0.16);
 }
 
 .performance-lite .project-slide-clickable:hover,

@@ -37,6 +37,26 @@ const projects = [
     url: "https://ttl-woad.vercel.app/",
   },
   {
+    title: "國科會專案",
+    category: "interactive",
+    tag: "Research",
+    status: "development",
+    description: "進行中的國科會研究專案，目前持續開發與測試中。",
+    stack: ["Research", "開發中"],
+    url: "https://github.com/fhcsij/Photon-VR_test",
+    ctaLabel: "GitHub 專案",
+  },
+  {
+    title: "Rustborn｜畢業製作",
+    category: "game",
+    tag: "Unity",
+    status: "development",
+    description: "以 Unity 開發的畢業製作 Rustborn，目前持續製作與測試中。",
+    stack: ["Unity", "畢業製作", "開發中"],
+    url: "https://github.com/Kevin19941227/Graduation-Project-Rustborn",
+    ctaLabel: "GitHub 專案",
+  },
+  {
     title: "互動式活動網站",
     category: "web",
     tag: "Web",
@@ -101,6 +121,12 @@ function setupAdaptivePerformance() {
   let slowFrames = 0;
 
   const sampleFrame = (now) => {
+    // A background tab is throttled; that is not evidence of a slow device.
+    if (document.hidden) {
+      previousFrame = 0;
+      requestAnimationFrame(sampleFrame);
+      return;
+    }
     if (previousFrame && now - previousFrame > 34) {
       slowFrames += 1;
     }
@@ -143,6 +169,12 @@ function projectMeta(project) {
   return project.stack.map((item) => `<span>${item}</span>`).join("");
 }
 
+function projectStatus(project) {
+  const status = project.status || (project.url ? "live" : "concept");
+  const labels = { live: "LIVE", development: "開發中", concept: "CONCEPT" };
+  return { label: labels[status] || labels.concept, value: labels[status] ? status : "concept" };
+}
+
 function projectLink(project) {
   if (!project.url) {
     return "";
@@ -159,7 +191,7 @@ function renderFeaturedProjects() {
       const linkAttributes = project.url
         ? `href="${project.url}" aria-label="開啟 ${project.title} ${ctaLabel}"`
         : "";
-      const status = project.url ? "LIVE" : "CONCEPT";
+      const status = projectStatus(project);
 
       return `
         <${slideTag}
@@ -176,7 +208,7 @@ function renderFeaturedProjects() {
             <span class="project-slide__scan" aria-hidden="true"></span>
             <div class="project-slide__top">
               <span class="project-kicker">${project.tag}</span>
-              <span class="project-status"><i></i>${status}</span>
+              <span class="project-status" data-status="${status.value}"><i></i>${status.label}</span>
             </div>
             <div class="project-slide__content">
               <span class="project-number">${String(index + 1).padStart(2, "0")}</span>
@@ -231,6 +263,7 @@ function setupCustomCursor() {
   let cursorFrame = 0;
 
   window.addEventListener("pointermove", (event) => {
+    if (isPerformanceLite()) return;
     cursor.classList.add("cursor-visible");
     pointerX = event.clientX;
     pointerY = event.clientY;
@@ -240,6 +273,10 @@ function setupCustomCursor() {
     }
 
     cursorFrame = requestAnimationFrame(() => {
+      if (isPerformanceLite()) {
+        cursorFrame = 0;
+        return;
+      }
       cursor.style.setProperty("--cursor-x", `${pointerX}px`);
       cursor.style.setProperty("--cursor-y", `${pointerY}px`);
       cursorFrame = 0;
@@ -348,6 +385,7 @@ function updateShowcaseHud(activeIndex, animate = true) {
     slide.classList.toggle("is-active", index === normalizedIndex);
     slide.classList.toggle("is-past", index < normalizedIndex);
     slide.classList.toggle("is-future", index > normalizedIndex);
+    slide.classList.toggle("is-next", index === normalizedIndex + 1);
     slide.classList.toggle(
       "is-visible-past",
       historyDepth > 0 && historyDepth <= 3,
@@ -496,28 +534,6 @@ function setupAnimations() {
 
     showcase.classList.add("book-mode");
 
-    const layoutPastPages = (currentIndex) => {
-      slides.forEach((slide, index) => {
-        const depth = currentIndex - index;
-
-        if (depth <= 0 || depth > 3) {
-          return;
-        }
-
-        gsap.set(slide, {
-          xPercent: -100,
-          x: -depth * 7,
-          y: (depth - 2) * 7,
-          z: -depth * 18,
-          scale: 1 - depth * 0.012,
-          rotationY: 4 + depth * 1.4,
-          rotationZ: -1.2 - depth * 1.15,
-          transformOrigin: "100% 50%",
-          zIndex: 14 - depth,
-        });
-      });
-    };
-
     gsap.set(track, { x: 0 });
     slides.forEach((slide, index) => {
       const fanOffset = Math.min(index, 5);
@@ -525,7 +541,8 @@ function setupAnimations() {
       gsap.set(slide, {
         x: fanOffset * 5,
         y: (fanOffset - 2) * 5,
-        z: -fanOffset * 7,
+        // Keep angled future pages behind the readable page across their full width.
+        z: -fanOffset * 40,
         scale: 1 - fanOffset * 0.012,
         rotationY: -fanOffset * 1.8,
         rotationZ: (fanOffset - 2) * 1.15,
@@ -543,25 +560,24 @@ function setupAnimations() {
 
     const bookTimeline = gsap.timeline({
       defaults: { ease: "none" },
+      // The timeline owns every page transform, including the history fan.
+      // Keep the HUD tied to the rendered playhead while scrub catches up.
+      onUpdate() {
+        const nextIndex = Math.min(pageCount, Math.floor(this.time() + 0.53));
+        if (nextIndex !== activeProjectIndex) {
+          activeProjectIndex = nextIndex;
+          updateShowcaseHud(activeProjectIndex, false);
+        }
+      },
       scrollTrigger: {
         trigger: showcase,
         start: "top top",
         end: () => `+=${Math.max(window.innerHeight * 0.9, 720) * pageCount}`,
         pin: true,
-        scrub: true,
+        scrub: 0.18,
+        refreshPriority: 1,
         invalidateOnRefresh: true,
         anticipatePin: 1,
-        onUpdate: (self) => {
-          const nextIndex = Math.min(
-            pageCount,
-            Math.floor(self.progress * pageCount + 0.53),
-          );
-          if (nextIndex !== activeProjectIndex) {
-            activeProjectIndex = nextIndex;
-            updateShowcaseHud(activeProjectIndex, false);
-          }
-          layoutPastPages(activeProjectIndex);
-        },
       },
     });
 
@@ -569,7 +585,6 @@ function setupAnimations() {
       const nextSlide = slides[index + 1];
       const fold = folds[index];
       const position = index;
-      const leftFan = Math.min(index, 5);
 
       bookTimeline
         .to(
@@ -611,12 +626,12 @@ function setupAnimations() {
         .to(
           slide,
           {
-            rotationY: 7 + leftFan * 1.5,
-            rotationZ: -5 + leftFan * 1.4,
-            x: -leftFan * 7,
-            y: (leftFan - 2) * 6,
-            z: -leftFan * 8,
-            scale: 1 - leftFan * 0.012,
+            rotationY: 5.4,
+            rotationZ: -2.35,
+            x: -7,
+            y: -7,
+            z: -18,
+            scale: 0.988,
             duration: 0.51,
           },
           position + 0.49,
@@ -634,6 +649,19 @@ function setupAnimations() {
           },
           position + 0.58,
         );
+
+      // Move older pages only during subsequent turns, never from a scroll callback.
+      for (let depth = 2; depth <= 3 && index + depth <= pageCount; depth += 1) {
+        bookTimeline.to(slide, {
+          x: -depth * 7,
+          y: (depth - 2) * 7,
+          z: -depth * 18,
+          scale: 1 - depth * 0.012,
+          rotationY: 4 + depth * 1.4,
+          rotationZ: -1.2 - depth * 1.15,
+          duration: 1,
+        }, index + depth - 1);
+      }
     });
 
     return () => {
@@ -648,6 +676,12 @@ function setupAnimations() {
       }
     };
   });
+
+  // Font metrics and the hero image can change section offsets after setup.
+  const refreshLayout = () => ScrollTrigger.refresh();
+  if (document.readyState === "complete") refreshLayout();
+  else window.addEventListener("load", refreshLayout, { once: true });
+  document.fonts?.ready.then(refreshLayout);
 }
 
 function setupFallbackMotion() {
@@ -759,6 +793,7 @@ function setupFallbackMotion() {
 }
 
 document.querySelector("#year").textContent = new Date().getFullYear();
+document.querySelector("[data-project-count]").dataset.count = String(projects.length);
 setupAdaptivePerformance();
 renderFeaturedProjects();
 setupMenu();

@@ -9,3 +9,5 @@ TTL-deploy/var/sessions/*
 !TTL-deploy/var/sessions/.gitkeep
 .DS_Store
 .vercel/
+.playwright-cli/
+output/
