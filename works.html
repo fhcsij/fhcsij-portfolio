@@ -45,6 +45,7 @@
       position:absolute; top:0; left:0;
       width:var(--hw);
       margin-left:calc(var(--hw) / -2);
+      transform-style:preserve-3d;
       text-align:center;
       font-family:var(--serif);
       font-weight:400;
@@ -63,7 +64,7 @@
       transform:translateY(-50%);
     }
     #headline .inner>span{display:inline-block;opacity:0;transform:translateY(.42em);filter:blur(7px);transition:opacity 1.05s ease,transform 1.15s var(--ease),filter 1.05s ease;transition-delay:calc(.9s + var(--i)*.085s)}
-    body.revealed #headline .inner>span{opacity:1;transform:none;filter:blur(0)}
+    body.revealed #headline .inner>span{opacity:1;transform:none;filter:none}
     .card{position:absolute;left:0;top:0;width:var(--cw);height:calc(var(--cw)/1.5);margin-left:calc(var(--cw)/-2);margin-top:calc(var(--cw)/-3);transform-style:preserve-3d;cursor:pointer;touch-action:pan-y}
     .card.tall{height:calc(var(--cw)*1.25);margin-top:calc(var(--cw)*-.625)}
     .card figure{position:relative;width:100%;height:100%;overflow:hidden;border-radius:3px;background:#0a0a0a;cursor:pointer;transition:transform .5s ease}
@@ -399,7 +400,8 @@
       if(!dirty)return;const sx=clamp(tilt+dragY,-32,32),sy=spin+dragX;
       const worldTransform=`translateZ(${camZ}px) rotateY(${sy}deg) rotateX(${sx}deg)`;if(worldTransform!==lastWorld){world.style.transform=worldTransform;lastWorld=worldTransform}
       const headlineTransform=`rotateX(${-sx}deg) rotateY(${-sy}deg) translateZ(${R*.62}px)`;if(headlineTransform!==lastHeadline){headline.style.transform=headlineTransform;lastHeadline=headlineTransform}
-      const opacity=Math.max(0,1-p*.55);if(opacity!==lastOpacity){headline.style.opacity=opacity;lastOpacity=opacity}
+      // Keep opacity off the zero-height 3D container: flattening it clips glyphs.
+      const opacity=Math.max(0,1-p*.55);if(opacity!==lastOpacity){headline.firstElementChild.style.opacity=opacity;lastOpacity=opacity}
       const ry=sy*Math.PI/180,rx=sx*Math.PI/180,cosY=Math.cos(ry),sinY=Math.sin(ry),cosX=Math.cos(rx),sinX=Math.sin(rx),shade=1-Math.min(1,p*1.6),near=perspective*.66;
       vectors.forEach((v,i)=>{const pitchedZ=-v.y*sinX+v.z*cosX,zf=clamp(-v.x*sinY+pitchedZ*cosY,-1,1),base=.14+.86*Math.pow((zf+1)/2,.85);let dim=shade*(1-base),fade=1;const absZ=zf*R+camZ;if(absZ>near)fade=Math.max(0,1-(absZ-near)/190);if(litOpen){dim=Math.min(1,dim+.78);if(i===focusedIndex)fade=0}dim=Math.round(dim*1000)/1000;fade=Math.round(fade*1000)/1000;if(v.dim!==dim){cards[i].style.setProperty('--d',dim);v.dim=dim}if(v.fade!==fade){cards[i].style.opacity=fade;v.fade=fade}});dirty=false;
     }
