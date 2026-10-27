@@ -99,6 +99,12 @@
     .grid-item.pending .missing{justify-content:flex-start;text-align:left}.grid-item.pending .missing strong{display:none}.grid-item.pending figcaption{opacity:1;transform:none}body.lit .grid-item figcaption,body.lit .grid-heading{opacity:0}body.lit .grid-item.pending .missing{opacity:.2}
     #lit{place-items:safe center}.bio .name{color:var(--ink)}
     #litNote{white-space:pre-line}
+    .film-toggle{display:block;margin:8px auto;padding:0 14px;min-height:44px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+    .project-video{position:absolute;inset:0;background:radial-gradient(ellipse at center,#20272c,#080a0c 75%)}
+    #playProjectVideo{position:absolute;inset:0;display:flex;width:100%;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+    #playProjectVideo>span{font-size:44px;line-height:1}#playProjectVideo strong{font-family:var(--serif);font-size:clamp(26px,5vw,48px);font-weight:400}#playProjectVideo small{font-size:12px;letter-spacing:.1em;color:var(--dim)}
+    #projectVideoFrame,#projectVideoFrame video{width:100%;height:100%}#projectVideoFrame:empty{pointer-events:none}#projectVideoFrame video{display:block;border:0;object-fit:contain;background:#000}
+    .shot [data-close]{z-index:2}#projectVideoFallback a{text-decoration:underline;text-underline-offset:3px}
     .gallery-nav{display:flex;justify-content:center;align-items:center;gap:20px;margin-top:10px;font-size:11px;letter-spacing:.12em;color:var(--dim)}
     .gallery-nav button{width:44px;height:44px;border:1px solid var(--line);border-radius:3px;color:var(--ink);font-size:20px;transition:background .3s ease}
     .gallery-nav button:hover{background:#ffffff12}.gallery-nav button:disabled{opacity:.3;cursor:default}
@@ -141,9 +147,11 @@
   <section id="lit" role="dialog" aria-modal="true" aria-labelledby="litTitle" aria-hidden="true" inert>
     <div class="scrim" data-close aria-hidden="true"></div>
     <article class="plate">
-      <div class="shot"><img id="litImage" alt="" hidden><div id="litMissing" class="missing" hidden></div><button data-close aria-label="Close project">Close</button></div>
+      <div class="shot"><img id="litImage" alt="" hidden><div id="litMissing" class="missing" hidden></div><div id="litVideo" class="project-video" hidden><button id="playProjectVideo" aria-label="播放 Vessel 展演影片"><span aria-hidden="true">▷</span><strong>Vessel</strong><small>播放展演影片</small></button><div id="projectVideoFrame"></div></div><button data-close aria-label="Close project">Close</button></div>
       <div id="galleryNav" class="gallery-nav" hidden><button id="galleryPrev" aria-label="上一張作品圖片">←</button><span id="galleryCount" role="status" aria-live="polite" aria-atomic="true"></span><button id="galleryNext" aria-label="下一張作品圖片">→</button></div>
+      <button id="projectVideoToggle" class="film-toggle" hidden>播放完整展演影片 ▷</button>
       <p id="galleryCaption" class="gallery-caption" hidden></p>
+      <p id="projectVideoFallback" class="gallery-caption" hidden>若播放器無法載入，<a id="projectVideoLink" target="_blank" rel="noopener noreferrer">另開影片播放 ↗</a></p>
       <div class="meta"><div><h2 id="litTitle"></h2><p id="litWhere"></p></div><div><p id="litNote"></p><a id="litLink" target="_blank" rel="noopener noreferrer" hidden></a><p id="litAccess" hidden></p></div></div>
     </article>
   </section>
@@ -255,10 +263,31 @@
         "title": "Chronostasis",
         "category": "Interactive Media",
         "year": "",
-        "description": "Chronostasis 是結合 TouchDesigner、MediaPipe 與手勢辨識的互動影像作品，探索身體動作、時間流動與視覺感知之間的關係。觀眾透過手勢參與影像變化，讓原本被動觀看的過程，轉變成能夠主動介入的互動體驗。\n\n作品以手勢操控時間流動作為核心概念，將動作輸入與即時影像回饋連結起來。重點不只是顯示影像，而是讓觀眾感受到自己的動作如何影響觀看到的時間與畫面。此處提供影片展示入口，呈現作品的互動方式與視覺效果。",
-        "image": null,
-        "images": [],
-        "fullImage": null,
+        "description": "Chronostasis（時間靜止錯覺）是以「人與時間的關係」為核心的團隊互動影像作品，結合 TouchDesigner 與 MediaPipe，讓觀眾透過身體動作與手勢介入時間流動。作品以「控制」與「失控」之間的張力，引導觀眾思考：當我們試圖掌握時間時，是否也會感受到它無法被完全留住。\n\n簡報規劃以雙手距離控制時間流速：靠近時加速、張開時慢速流動，握拳時暫停；雙手放下或離開偵測範圍後，恢復正常流速。觀眾的位置與動作也納入影像回饋設計，透過光線、粒子與時鐘意象，串起初始、互動與轉換階段。\n\n我負責硬體與軟體的串接、整合，串聯攝影機輸入、手勢偵測、即時影像生成與投影呈現。簡報列出的整合工具為 TouchDesigner、MediaPipe、攝影機、投影機與電腦；並針對辨識穩定度、投影校正與光線干擾規劃測試及調整。下方收錄簡報的場景概念、互動流程與系統架構；場景圖為概念示意，實際互動效果可由作品影片查看。",
+        "image": "assets/images/chronostasis-01.webp",
+        "images": [
+          {
+            "image": "assets/images/chronostasis-01.webp",
+            "fullImage": "assets/images/chronostasis-01-full.webp",
+            "caption": "沉浸式場景概念圖｜簡報示意，非現場實拍"
+          },
+          {
+            "image": "assets/images/chronostasis-02.webp",
+            "fullImage": "assets/images/chronostasis-02-full.webp",
+            "caption": "Chronostasis｜作品簡報封面與團隊資訊"
+          },
+          {
+            "image": "assets/images/chronostasis-03.webp",
+            "fullImage": "assets/images/chronostasis-03-full.webp",
+            "caption": "手勢互動流程｜時間流速、暫停與恢復的設計"
+          },
+          {
+            "image": "assets/images/chronostasis-04.webp",
+            "fullImage": "assets/images/chronostasis-04-full.webp",
+            "caption": "軟硬體整合計畫｜攝影機、手勢辨識與投影流程"
+          }
+        ],
+        "fullImage": "assets/images/chronostasis-01-full.webp",
         "tall": false,
         "featured": true,
         "url": "https://youtu.be/JFRc-Lt4ZZA",
@@ -311,7 +340,7 @@
         "title": "國科會專案｜元宇宙學習環境",
         "category": "Interactive Media",
         "year": "2026 —",
-        "description": "自 2026 年 7 月起參與元宇宙學習環境相關國科會計畫，負責多人 VR 環境的網路連線、場景及互動整合。計畫結合社會共享自我調節學習理論、情緒辨識與人工智慧虛擬學習夥伴，探討地球科學學習成效與學習感受，目前仍持續進行中。\n\n我的工作包含連線失敗排查、記錄環境設定並統一香港連線區域，以及依參與者 ID 還原分組。教學互動部分整合區域交談、巡組與廣播等語音需求，並處理手部穿牆限制與追蹤調整，讓連線、分組、語音和場景互動能共同運作。\n\n這項經驗讓我更重視問題現象、設定、處理步驟與測試結果的可追溯紀錄。情緒辨識模型、學習理論設計與學習成效驗證屬於計畫整體範圍，並非我的已完成成果。",
+        "description": "自 2026 年 6 月起參與元宇宙學習環境相關國科會計畫，負責多人 VR 環境的網路連線、場景及互動整合。計畫結合社會共享自我調節學習理論、情緒辨識與人工智慧虛擬學習夥伴，探討地球科學學習成效與學習感受，目前仍持續進行中。\n\n我的工作包含連線失敗排查、記錄環境設定並統一香港連線區域，以及依參與者 ID 還原分組。教學互動部分整合區域交談、巡組與廣播等語音需求，並處理手部穿牆限制與追蹤調整，讓連線、分組、語音和場景互動能共同運作。\n\n這項經驗讓我更重視問題現象、設定、處理步驟與測試結果的可追溯紀錄。情緒辨識模型、學習理論設計與學習成效驗證屬於計畫整體範圍，並非我的已完成成果。",
         "image": null,
         "images": [],
         "fullImage": null,
@@ -323,12 +352,44 @@
       },
       {
         "id": "rustborn",
+        "video": {
+          "src": "assets/videos/vessel-exhibition.mp4",
+          "poster": "assets/images/vessel-poster.webp",
+          "url": "assets/videos/vessel-exhibition.mp4",
+          "title": "Vessel 展演影片"
+        },
         "title": "Vessel｜畢業製作",
         "category": "Game Development",
         "year": "",
         "description": "Vessel 是團隊規劃中的四人 3D 動作遊戲，結合戰鬥、零件蒐集與角色組裝。玩家透過不同部件調整戰鬥方式，並共同面對 Boss 挑戰；上述內容為遊戲企畫，實際功能依開發進度逐步完成。\n\n我負責 Boss 在場景中的移動腳本與攻擊行為腳本，兩項功能目前都仍在製作中。作品使用 Unity，個人貢獻以 Boss 行為的程式實作呈現；模型與材質等美術內容則屬於團隊素材。\n\n從這項實作延伸出 NPC 如何依目標與環境組合行動、以及環境改變時如何調整計畫的研究問題。GOAP 與學習式成本估計是未來擬以獨立原型探索的研究構想，並不是 Vessel 已完成的功能。",
-        "image": null,
-        "images": [],
+        "image": "assets/images/vessel-01.webp",
+        "images": [
+          {
+            "image": "assets/images/vessel-01.webp",
+            "fullImage": null,
+            "caption": "遊戲場景｜展演影片截圖"
+          },
+          {
+            "image": "assets/images/vessel-02.webp",
+            "fullImage": null,
+            "caption": "自訂外觀介面｜展演影片截圖"
+          },
+          {
+            "image": "assets/images/vessel-03.webp",
+            "fullImage": null,
+            "caption": "多人連線實機畫面｜展演影片截圖"
+          },
+          {
+            "image": "assets/images/vessel-04.webp",
+            "fullImage": null,
+            "caption": "自由組裝介面｜展演影片截圖"
+          },
+          {
+            "image": "assets/images/vessel-05.webp",
+            "fullImage": null,
+            "caption": "挑戰敵人實機畫面｜展演影片截圖"
+          }
+        ],
         "fullImage": null,
         "tall": false,
         "featured": false,
@@ -370,7 +431,7 @@
     portfolio.headline.trim().split(/\s+/).forEach((word,i)=>{if(i)headline.firstElementChild.append(' ');const span=document.createElement('span');span.style.setProperty('--i',i);span.textContent=word;headline.firstElementChild.append(span)});
     if(portfolio.email){for(const el of [$('#contactLink'),$('#menuEmail')]){el.href=`mailto:${portfolio.email}`;el.hidden=false}$('#menuEmail').textContent=portfolio.email}else{$('#contactFallback').hidden=false}
     root.style.overflow='hidden';
-    function missingContent(work){const box=document.createElement('div');box.className='missing';const title=document.createElement('strong');title.textContent=work.title;const note=document.createElement('small');note.textContent=work.status?'In development · Image pending':'Project image pending';box.append(title,note);return box}
+    function missingContent(work){const box=document.createElement('div');box.className='missing';const title=document.createElement('strong');title.textContent=work.title;const note=document.createElement('small');note.textContent=work.video?'Watch exhibition film ↗':work.status?'In development · Image pending':'Project image pending';box.append(title,note);return box}
     function imageElement(work,image){const img=document.createElement('img');img.alt=[work.title,image?.caption||'project preview'].join(' — ');img.decoding='async';img.draggable=false;return img}
     sphereItems.forEach((item,i)=>{
       const work=works[item.workIndex];let x=0,y=0,z=1,lat=0,lon=0;
@@ -419,12 +480,18 @@
     menu.addEventListener('click',event=>{const item=event.target.closest('[data-menu]');if(!item)return;const action=item.dataset.menu;setMenu(false);if(action==='works'||action==='projects')setGrid(true);else if(action==='about'){setGrid(false);scrollTo({top:0,behavior:'instant'});camZ=0;dirty=true;renderCamera();menuBtn.focus({preventScroll:true})}else if(!portfolio.email){$('#announcement').textContent='Contact information has not been configured.'}});
     function showLightboxImage(work,src,image){litImage.hidden=true;litMissing.hidden=true;if(!src){litImage.removeAttribute('src');litMissing.replaceChildren(...missingContent(work).children);litMissing.hidden=false;return}litImage.alt=[work.title,image?.caption||'project image'].join(' — ');litImage.src=src;litImage.hidden=false}
     function galleryImage(){return galleries[focusedWorkIndex]?.[activeImageIndex]||null}
+    function resetProjectVideo(){const player=$('#projectVideoFrame video');if(player){player.pause();player.removeAttribute('src');player.load()}const host=$('#litVideo');host.hidden=true;$('#projectVideoFrame').replaceChildren();$('#playProjectVideo').hidden=false;$('#projectVideoFallback').hidden=true}
+    function startProjectVideo(){const media=works[focusedWorkIndex]?.video;if(!litOpen||!media)return;const player=document.createElement('video');player.controls=true;player.playsInline=true;player.preload='none';player.setAttribute('aria-label',media.title);if(media.poster)player.poster=media.poster;player.src=media.src;player.addEventListener('error',()=>{$('#projectVideoFallback').hidden=false;$('#projectVideoFallback').firstChild.textContent='影片暫時無法播放，請嘗試';},{once:true});$('#projectVideoFrame').replaceChildren(player);$('#playProjectVideo').hidden=true;player.focus();const play=player.play();if(play?.catch)play.catch(()=>{ /* Native controls remain available when autoplay is blocked. */ })}
+    $('#playProjectVideo').addEventListener('click',startProjectVideo);
+    $('#projectVideoToggle').addEventListener('click',()=>{const work=works[focusedWorkIndex];if(!litOpen||!work?.video)return;if(!$('#litVideo').hidden){showGalleryImage();return}++imageToken;litImage.hidden=true;litMissing.hidden=true;$('#litVideo').hidden=false;shot.style.aspectRatio='16/9';$('#projectVideoLink').href=work.video.url;$('#projectVideoFallback').hidden=false;$('#projectVideoToggle').textContent='返回作品圖片';startProjectVideo()});
     function showGalleryImage(){
       const work=works[focusedWorkIndex];if(!litOpen||!work)return;const image=galleryImage(),token=++imageToken,cached=image&&assets.get(image.image),count=galleries[focusedWorkIndex].length;
+      resetProjectVideo();$('#projectVideoToggle').hidden=!work.video;$('#projectVideoToggle').textContent='播放完整展演影片 ▷';
       $('#galleryNav').hidden=count<2;$('#galleryCount').textContent=count?`${activeImageIndex+1} / ${count}`:'No project images';$('#galleryPrev').disabled=activeImageIndex<=0;$('#galleryNext').disabled=activeImageIndex>=count-1;
       $('#galleryCaption').textContent=image?.caption||'';$('#galleryCaption').hidden=!image?.caption;
       plate.classList.toggle('portrait',!!image?.tall);shot.style.aspectRatio=image?.tall?(cached?.width&&cached?.height?`${cached.width}/${cached.height}`:'4/5'):'3/2';
       showLightboxImage(work,cached?.src||null,image);
+      if(work.video&&!image){litMissing.hidden=true;$('#litVideo').hidden=false;$('#playProjectVideo').style.background=work.video.poster?`linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.65)),url("${work.video.poster}") center/cover`:'';shot.style.aspectRatio='16/9';$('#projectVideoLink').href=work.video.url;$('#projectVideoFallback').hidden=false}
       if(image?.fullImage){if(!fullImagePromises.has(image.fullImage))fullImagePromises.set(image.fullImage,loadOriginal(image.fullImage,9000));fullImagePromises.get(image.fullImage).then(result=>{if(result&&litOpen&&imageToken===token)showLightboxImage(work,result.src,image)})}
     }
     function changeGalleryImage(direction){const count=galleries[focusedWorkIndex]?.length||0,next=clamp(activeImageIndex+direction,0,Math.max(0,count-1));if(!litOpen||next===activeImageIndex)return;activeImageIndex=next;showGalleryImage()}
@@ -434,13 +501,13 @@
       showGalleryImage();body.classList.add('lit');source.classList.add('focused');lock();syncInert();dirty=true;renderCamera();plate.style.transition='none';plate.style.transform='none';plate.style.opacity='1';const target=plate.getBoundingClientRect(),dx=sourceRectangle.left+sourceRectangle.width/2-target.left-target.width/2,dy=sourceRectangle.top+sourceRectangle.height/2-target.top-target.height/2,scale=Math.max(.04,sourceRectangle.width/target.width);
       plate.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;plate.style.opacity='0';void plate.offsetWidth;requestAnimationFrame(()=>{if(!litOpen||sourceElement!==source)return;plate.style.transition='';plate.style.transform='';plate.style.opacity='';lit.querySelector('button[data-close]').focus({preventScroll:true})});
     }
-    function closeLightbox(){if(!litOpen)return;const focus=returnFocus,source=sourceElement;litOpen=false;focusedIndex=-1;++imageToken;source?.classList.remove('focused');dirty=true;renderCamera();const target=plate.getBoundingClientRect(),from=source?.getBoundingClientRect()||sourceRectangle;plate.style.transition='none';plate.style.transform='none';void plate.offsetWidth;plate.style.transition='';
+    function closeLightbox(){if(!litOpen)return;resetProjectVideo();const focus=returnFocus,source=sourceElement;litOpen=false;focusedIndex=-1;++imageToken;source?.classList.remove('focused');dirty=true;renderCamera();const target=plate.getBoundingClientRect(),from=source?.getBoundingClientRect()||sourceRectangle;plate.style.transition='none';plate.style.transform='none';void plate.offsetWidth;plate.style.transition='';
       if(from){const dx=from.left+from.width/2-target.left-target.width/2,dy=from.top+from.height/2-target.top-target.height/2;plate.style.transform=`translate(${dx}px,${dy}px) scale(${Math.max(.04,from.width/target.width)})`}plate.style.opacity='0';body.classList.remove('lit');lock();syncInert();focus?.focus({preventScroll:true});closeTimer=setTimeout(()=>{plate.style.transition='none';plate.style.transform='';plate.style.opacity='';void plate.offsetWidth;plate.style.transition=''},reduced.matches?150:640);
     }
     litImage.addEventListener('error',()=>{if(litOpen){litImage.hidden=true;litMissing.replaceChildren(...missingContent(works[focusedWorkIndex]).children);litMissing.hidden=false}});
     lit.addEventListener('click',event=>{if(event.target.closest('[data-close]'))closeLightbox()});rows.addEventListener('click',event=>{const source=event.target.closest('[data-idx]');if(source)openLightbox(Number(source.dataset.idx),source)});
     function keyboardProject(event){const source=event.target.closest('[data-idx]');if(source&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openLightbox(Number(source.dataset.idx),source)}}orb.addEventListener('keydown',keyboardProject);rows.addEventListener('keydown',keyboardProject);
-    document.addEventListener('keydown',event=>{if(litOpen&&(event.key==='ArrowLeft'||event.key==='ArrowRight')&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();changeGalleryImage(event.key==='ArrowLeft'?-1:1);return}if(event.key==='Escape'){if(litOpen)closeLightbox();else if(menuOpen)setMenu(false);else if(gridOpen)setGrid(false);else if(!revealed&&intro.isConnected)reveal();return}if(event.key==='Tab'&&(litOpen||menuOpen)){const host=litOpen?lit:menu,focusable=[...host.querySelectorAll('a[href],button:not(:disabled),[tabindex="0"]')].filter(el=>!el.hidden&&el.getClientRects().length);if(menuOpen)focusable.push(menuBtn);const first=focusable[0],last=focusable.at(-1);if(!first)return;if(event.shiftKey&&(document.activeElement===first||!focusable.includes(document.activeElement))){event.preventDefault();last.focus()}else if(!event.shiftKey&&(document.activeElement===last||!focusable.includes(document.activeElement))){event.preventDefault();first.focus()}}});
+    document.addEventListener('keydown',event=>{if(litOpen&&(event.key==='ArrowLeft'||event.key==='ArrowRight')&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();changeGalleryImage(event.key==='ArrowLeft'?-1:1);return}if(event.key==='Escape'){if(litOpen)closeLightbox();else if(menuOpen)setMenu(false);else if(gridOpen)setGrid(false);else if(!revealed&&intro.isConnected)reveal();return}if(event.key==='Tab'&&(litOpen||menuOpen)){const host=litOpen?lit:menu,focusable=[...host.querySelectorAll('a[href],button:not(:disabled),video[controls],[tabindex="0"]')].filter(el=>!el.hidden&&el.getClientRects().length);if(menuOpen)focusable.push(menuBtn);const first=focusable[0],last=focusable.at(-1);if(!first)return;if(event.shiftKey&&(document.activeElement===first||!focusable.includes(document.activeElement))){event.preventDefault();last.focus()}else if(!event.shiftKey&&(document.activeElement===last||!focusable.includes(document.activeElement))){event.preventDefault();first.focus()}}});
     stage.addEventListener('pointerdown',event=>{if(!revealed||litOpen||menuOpen||gridOpen||event.isPrimary===false||event.button!==0)return;const source=event.target.closest('.card');drag={id:event.pointerId,type:event.pointerType,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,time:performance.now(),source,moved:false,captured:event.pointerType!=='touch'};velX=velY=0;dragging=drag.captured;if(drag.captured)stage.setPointerCapture(event.pointerId)});
     stage.addEventListener('pointermove',event=>{if(!drag||drag.id!==event.pointerId)return;const totalX=event.clientX-drag.startX,totalY=event.clientY-drag.startY,coarse=drag.type==='touch',distance=Math.hypot(totalX,totalY);if(coarse&&!drag.captured){if(distance<=10)return;if(Math.abs(totalY)>Math.abs(totalX)*1.15){drag=null;dragging=false;return}stage.setPointerCapture(event.pointerId);drag.captured=true;drag.moved=true;dragging=true}if(!drag.captured)return;const now=performance.now(),dt=Math.max(8,now-drag.time),dx=event.clientX-drag.lastX,dy=event.clientY-drag.lastY;dragX+=dx*.13;dragY=clamp(dragY+dy*.13,-32-tilt,32-tilt);velX=dx*.13*Math.min(2,16.667/dt);velY=dy*.13*Math.min(2,16.667/dt);drag.lastX=event.clientX;drag.lastY=event.clientY;drag.time=now;drag.moved||=distance>(coarse?14:6);dirty=true;renderCamera()});
     function endDrag(event,cancelled=false){if(!drag||drag.id!==event.pointerId)return;const state=drag;drag=null;dragging=false;const travel=Math.hypot(event.clientX-state.startX,event.clientY-state.startY),threshold=state.type==='touch'?14:6;if(stage.hasPointerCapture(event.pointerId))stage.releasePointerCapture(event.pointerId);if(cancelled){velX=velY=0;return}if(performance.now()-state.time>90)velX=velY=0;if(!state.moved&&travel<=threshold&&state.source){velX=velY=0;openLightbox(Number(state.source.dataset.idx),state.source)}}
